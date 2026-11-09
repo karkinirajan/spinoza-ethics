@@ -9,7 +9,7 @@ interface InteractiveGroupProps {
     className?: string;
 }
 
-const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps) => (
+const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps): React.JSX.Element => (
     <g
         transform={transform}
         onClick={onClick}
@@ -22,7 +22,7 @@ const InteractiveGroup = ({ transform, onClick, children, className = "" }: Inte
     </g>
 );
 
-const WavyCard = ({ x, y, text, fill, stroke }: { x: number, y: number, text: string, fill: string, stroke: string }) => (
+const WavyCard = ({ x, y, text, fill, stroke }: { x: number, y: number, text: string, fill: string, stroke: string }): React.JSX.Element => (
     <g transform={`translate(${x}, ${y})`}>
         <path
             d="M -50 -14 C -35 -14, -15 -20, 0 -14 C 15 -8, 35 -8, 50 -14 L 50 14 C 35 14, 15 8, 0 14 C -15 20, -35 20, -50 14 Z"
@@ -36,11 +36,11 @@ const WavyCard = ({ x, y, text, fill, stroke }: { x: number, y: number, text: st
     </g>
 );
 
-const HierarchyDiagram = () => {
+const HierarchyDiagram = (): React.JSX.Element => {
     const { explainConcept } = useSpinoza();
     const C = useThemeColors();
 
-    const handleNodeClick = (title: string, context: string) => {
+    const handleNodeClick = (title: string, context: string): void => {
         explainConcept(title, context);
     };
 
@@ -77,7 +77,7 @@ const HierarchyDiagram = () => {
 
             <div className="w-full max-w-[1600px] mx-auto aspect-auto relative px-4 mt-2">
                 <svg aria-labelledby="hierarchy-title" role="img" viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} className="w-full h-auto min-h-[1100px]">
-                    <title id="hierarchy-title">Hierarchy diagram of Spinoza's Ethics</title>
+                    <title id="hierarchy-title">Hierarchy diagram of Spinoza&apos;s Ethics</title>
                     <defs>
                         <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="3" />

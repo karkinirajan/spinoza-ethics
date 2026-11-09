@@ -3,7 +3,7 @@
 An interactive, visual journey through Baruch Spinoza's *Ethics*, designed to make his complex metaphysical system accessible and engaging. This application visualizes the hierarchy of being, from Substance to Blessedness, using interactive diagrams and AI-powered explanations.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwind-css)
 ![Groq](https://img.shields.io/badge/Groq-API-f59e0b?logo=groq)
 
@@ -46,7 +46,7 @@ An interactive, visual journey through Baruch Spinoza's *Ethics*, designed to ma
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 24 or newer (`.nvmrc` says 26, the current LTS)
 - Git
 - Groq API key (free at [console.groq.com/api-keys](https://console.groq.com/api-keys))
 
@@ -58,7 +58,8 @@ git clone https://github.com/kneeraazon404/spinoza-ethics.git
 cd spinoza-ethics
 
 # Install dependencies
-npm install
+nvm use   # picks up .nvmrc
+npm ci
 
 # Create environment file
 cp .env.example .env.local
@@ -71,8 +72,10 @@ cp .env.example .env.local
 Create a `.env.local` file in the root directory:
 
 ```env
-NEXT_PUBLIC_GROQ_API_KEY=your_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
+
+The key is used only by the server (`src/app/api/explain/route.ts`). **Do not give it a `NEXT_PUBLIC_` prefix**: Next.js copies those variables into the JavaScript every visitor downloads. An earlier version of this app did, so a key that was ever deployed that way should be rotated (see [docs/02-security.md](docs/02-security.md)).
 
 ### Development
 
@@ -92,7 +95,8 @@ spinoza-ethics/
 │   │   ├── page.tsx            # Home page
 │   │   ├── globals.css         # Global styles
 │   │   ├── robots.ts           # SEO robots.txt
-│   │   └── sitemap.ts          # SEO sitemap
+│   │   ├── sitemap.ts          # SEO sitemap
+│   │   └── api/explain/route.ts # The AI endpoint (the only place the key is used)
 │   ├── components/
 │   │   ├── diagrams/           # Diagram components
 │   │   │   ├── HierarchyDiagram.tsx
@@ -112,7 +116,12 @@ spinoza-ethics/
 │   ├── hooks/
 │   │   └── useThemeColors.ts   # Theme colors hook
 │   └── lib/
-│       └── groq.ts             # Groq API client
+│       ├── explain.ts          # What a request may contain; the fixed prompts
+│       ├── explain-client.ts   # Browser side: asks /api/explain
+│       ├── groq.ts             # Groq call (server only)
+│       ├── rate-limit.ts, client-address.ts, read-limited.ts
+├── test/                       # Vitest: lib, API route, security guards, mutation
+├── docs/                       # Chapters: architecture, security, testing, operations
 ├── public/                     # Static assets
 ├── .env.example                # Environment template
 ├── .env.local                  # Local environment (gitignored)
@@ -128,7 +137,12 @@ spinoza-ethics/
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+| `npm run lint` | Run ESLint (zero warnings allowed) |
+| `npm run type-check` | `tsc --noEmit` |
+| `npm test` | Unit, route and security tests (Vitest) |
+| `npm run test:coverage` | The same, with coverage |
+| `npm run check` | Type-check, lint and tests |
+| `npm run ci` | `check`, then a production build and `npm audit` |
 
 ## Deployment
 
@@ -136,18 +150,30 @@ spinoza-ethics/
 
 1. Push code to GitHub
 2. Import project in [Vercel](https://vercel.com/new)
-3. Add environment variable `NEXT_PUBLIC_GROQ_API_KEY` in Vercel settings
+3. Add the environment variable `GROQ_API_KEY` in Vercel settings (not `NEXT_PUBLIC_GROQ_API_KEY`)
 4. Deploy
 
 ### Environment Variables for Production
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `NEXT_PUBLIC_GROQ_API_KEY` | Groq Cloud API key | Yes |
+| `GROQ_API_KEY` | Groq Cloud API key (server only) | For the AI features |
+| `TRUST_PROXY_HEADERS` | `true` only behind a proxy you control that overwrites `X-Forwarded-For`; detected on Vercel | No |
+
+## Documentation
+
+| Chapter | Covers |
+|---------|--------|
+| [01 Architecture](docs/01-architecture.md) | Request flow and where each rule lives |
+| [02 Security](docs/02-security.md) | What was fixed (including the exposed API key), what to do, what is left |
+| [03 Testing](docs/03-testing.md) | The suite, the key-exposure guards, mutation checks |
+| [04 Operations](docs/04-operations.md) | Deploying, the key to rotate, logs, CI |
+| [VERSIONS.md](VERSIONS.md) | What it runs on and why |
+| [work-done.md](work-done.md) | What was there and what changed, file by file |
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT, as declared in `package.json`. The repository has no `LICENSE` file yet: add one before anyone else reuses the code.
 
 ## Acknowledgments
 

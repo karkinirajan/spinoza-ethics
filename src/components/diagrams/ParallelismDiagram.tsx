@@ -9,7 +9,7 @@ interface InteractiveGroupProps {
     className?: string;
 }
 
-const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps) => (
+const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps): React.JSX.Element => (
     <g
         transform={transform}
         onClick={onClick}
@@ -22,11 +22,11 @@ const InteractiveGroup = ({ transform, onClick, children, className = "" }: Inte
     </g>
 );
 
-const ParallelismDiagram = () => {
+const ParallelismDiagram = (): React.JSX.Element => {
     const { explainConcept } = useSpinoza();
     const C = useThemeColors();
 
-    const handleNodeClick = (title: string, context: string) => {
+    const handleNodeClick = (title: string, context: string): void => {
         explainConcept(title, context);
     };
 
