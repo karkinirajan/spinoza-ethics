@@ -16,7 +16,7 @@ PARALLEL = int(sys.argv[2]) if len(sys.argv) > 2 else 6
 # (name, list file, name prefixes, vitest file filters)
 GROUPS = [
     ("limits", "mutants", ["address:", "limit:", "body:"], ["test/lib/client-address.test.ts", "test/lib/rate-limit.test.ts", "test/lib/read-limited.test.ts"]),
-    ("explain", "mutants", ["explain:", "groq:", "client:"], ["test/lib/explain.test.ts", "test/lib/groq.test.ts", "test/lib/explain-client.test.ts"]),
+    ("explain", "mutants", ["explain:", "groq:", "client:"], ["test/lib/explain.test.ts", "test/lib/concepts.test.ts", "test/lib/groq.test.ts", "test/lib/explain-client.test.ts"]),
     ("route", "mutants", ["route:"], ["test/api", "test/security"]),
 ]
 
