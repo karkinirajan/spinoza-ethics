@@ -114,7 +114,7 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
+export default function RootLayout({ children }: RootLayoutProps): React.JSX.Element {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",

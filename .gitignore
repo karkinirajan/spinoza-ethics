@@ -88,3 +88,6 @@ archive/
 # Ignore all markdown files but keep the primary README.md
 *.md
 !README.md
+
+# TypeScript incremental build cache
+*.tsbuildinfo

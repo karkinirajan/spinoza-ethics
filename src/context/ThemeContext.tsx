@@ -3,9 +3,9 @@
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
   useCallback,
+  useSyncExternalStore,
   type ReactNode,
   type FC,
 } from "react";
@@ -71,19 +71,28 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+const THEME_CHANGE_EVENT = "spinoza-theme-change";
+const noopSubscribe = (): (() => void) => () => undefined;
+
+/** The theme lives outside React (localStorage and the OS setting): React reads it with useSyncExternalStore. */
+function subscribeToTheme(onChange: () => void): () => void {
+  const media = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  window.addEventListener("storage", onChange);
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  media?.addEventListener("change", onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+    media?.removeEventListener("change", onChange);
+  };
+}
+
 const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
+  // The server (and the first client render, so hydration matches) uses "light"; the real value follows.
+  const theme = useSyncExternalStore<Theme>(subscribeToTheme, getInitialTheme, () => "light");
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
-  // Initialize theme on client side
-  useEffect(() => {
-    const initialTheme = getInitialTheme();
-    setThemeState(initialTheme);
-    document.documentElement.setAttribute("data-theme", initialTheme);
-    setMounted(true);
-  }, []);
-
-  // Update DOM whenever theme changes
+  // Keep the data-theme attribute on <html> in step with the theme
   useEffect(() => {
     if (mounted) {
       document.documentElement.setAttribute("data-theme", theme);
@@ -91,12 +100,12 @@ const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   }, [theme, mounted]);
 
   const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
     try {
       localStorage.setItem("theme", newTheme);
     } catch (error) {
       console.warn("Error saving theme to localStorage:", error);
     }
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
 
   const toggleTheme = useCallback(() => {

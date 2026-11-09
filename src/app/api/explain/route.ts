@@ -1,185 +1,66 @@
 /**
- * API Route: Groq AI Explanations
- * Handles requests for AI-powered explanations about Spinoza's Ethics
+ * POST /api/explain: AI explanations about Spinoza's Ethics, through Groq.
+ *
+ * Body: { kind: "advisor", query } or { kind: "concept", title, context }. The prompts are built here (lib/explain.ts): the
+ * request cannot supply a system prompt. The visitor is told only what they can act on; Groq's own error text never leaves the
+ * server.
  */
-
 import { NextRequest, NextResponse } from "next/server";
+import { clientAddress } from "@/lib/client-address";
+import { buildMessages, parseExplainRequest } from "@/lib/explain";
+import { GroqError, askGroq } from "@/lib/groq";
+import { limiterKey, memoryRateLimit } from "@/lib/rate-limit";
+import { PayloadTooLargeError, readTextLimited } from "@/lib/read-limited";
 
-const NEXT_PUBLIC_GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile"; // High-performance model
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-interface RequestBody {
-  userPrompt: string;
-  systemPrompt?: string;
+const BURST = { limit: 6, windowMs: 60_000 } as const;
+const HOURLY = { limit: 40, windowMs: 3_600_000 } as const;
+const MAX_BODY_BYTES = 8_000;
+const NO_STORE = { "Cache-Control": "no-store" };
+
+function fail(status: number, error: string, headers: Record<string, string> = {}): NextResponse {
+  return NextResponse.json({ success: false, error }, { status, headers: { ...NO_STORE, ...headers } });
 }
 
-interface GroqMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
+/** A browser that sends an Origin header must be calling from this site: a page elsewhere cannot spend our quota. */
+function crossSite(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try {
+    return new URL(origin).host !== request.headers.get("host");
+  } catch {
+    return true;
+  }
 }
 
-/**
- * POST /api/explain
- * Process AI explanation request
- */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Only allow POST requests
-  if (request.method !== "POST") {
-    return NextResponse.json(
-      { error: "Method not allowed" },
-      { status: 405 }
-    );
+  if (crossSite(request)) return fail(403, "Forbidden.");
+
+  const caller = clientAddress(request.headers);
+  for (const [scope, limit] of [["explain-burst", BURST], ["explain-hour", HOURLY]] as const) {
+    const verdict = memoryRateLimit(limiterKey(scope, caller), limit);
+    if (!verdict.ok) return fail(429, "Too many requests. Please wait a moment and try again.", { "Retry-After": String(verdict.retryAfter) });
   }
 
+  let body: unknown;
   try {
-    // Check API key configuration
-    if (!NEXT_PUBLIC_GROQ_API_KEY) {
-      console.error("NEXT_PUBLIC_GROQ_API_KEY is not configured");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          details:
-            "Groq API key not configured. Please set NEXT_PUBLIC_GROQ_API_KEY.",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Parse request body
-    const body: RequestBody = await request.json();
-    const { userPrompt, systemPrompt } = body;
-
-    // Validate inputs
-    if (!userPrompt || typeof userPrompt !== "string") {
-      return NextResponse.json(
-        { error: "Invalid input: userPrompt is required and must be a string" },
-        { status: 400 }
-      );
-    }
-
-    if (userPrompt.trim().length === 0) {
-      return NextResponse.json(
-        { error: "User prompt cannot be empty" },
-        { status: 400 }
-      );
-    }
-
-    // Rate limiting (basic check)
-    if (userPrompt.length > 5000) {
-      return NextResponse.json(
-        { error: "Prompt too long. Maximum 5000 characters." },
-        { status: 400 }
-      );
-    }
-
-    // Prepare messages
-    const messages: GroqMessage[] = [
-      {
-        role: "system",
-        content:
-          systemPrompt ||
-          "You are a helpful assistant knowledgeable about Spinoza's philosophy.",
-      },
-      {
-        role: "user",
-        content: userPrompt,
-      },
-    ];
-
-    // Call Groq API
-    const groqResponse = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${NEXT_PUBLIC_GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages,
-        temperature: 0.7,
-        max_tokens: 1024,
-        top_p: 1,
-        stream: false,
-      }),
-    });
-
-    // Handle Groq API errors
-    if (!groqResponse.ok) {
-      const errorData = await groqResponse.json().catch(() => ({}));
-
-      if (groqResponse.status === 401) {
-        return NextResponse.json(
-          { error: "Authentication failed. Invalid API key." },
-          { status: 401 }
-        );
-      } else if (groqResponse.status === 429) {
-        return NextResponse.json(
-          {
-            error: "Rate limit exceeded",
-            message: "Please wait a moment and try again.",
-          },
-          { status: 429 }
-        );
-      } else if (groqResponse.status >= 500) {
-        return NextResponse.json(
-          {
-            error: "Groq service error",
-            message: "The AI service is temporarily unavailable.",
-          },
-          { status: 503 }
-        );
-      }
-
-      return NextResponse.json(
-        {
-          error: "Groq API error",
-          details: errorData.error?.message || "Unknown error",
-        },
-        { status: groqResponse.status }
-      );
-    }
-
-    // Parse successful response
-    const data = await groqResponse.json();
-
-    if (
-      !data.choices ||
-      !data.choices[0] ||
-      !data.choices[0].message ||
-      !data.choices[0].message.content
-    ) {
-      return NextResponse.json(
-        { error: "Invalid response format from Groq API" },
-        { status: 500 }
-      );
-    }
-
-    // Return successful response
-    return NextResponse.json(
-      {
-        success: true,
-        text: data.choices[0].message.content,
-      },
-      { status: 200 }
-    );
+    body = JSON.parse(await readTextLimited(request, MAX_BODY_BYTES));
   } catch (error) {
-    console.error("Error in /api/explain:", error);
+    return error instanceof PayloadTooLargeError ? fail(413, "That request is too large.") : fail(400, "Invalid request.");
+  }
 
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
+  const parsed = parseExplainRequest(body);
+  if (!parsed.ok) return fail(400, parsed.error);
 
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      },
-      { status: 500 }
-    );
+  try {
+    const text = await askGroq(buildMessages(parsed.value));
+    return NextResponse.json({ success: true, text }, { headers: NO_STORE });
+  } catch (error) {
+    const kind = error instanceof GroqError ? error.kind : "unavailable";
+    console.error("[/api/explain] failed:", error instanceof Error ? error.message : kind);
+    if (kind === "rate_limited") return fail(429, "The advisor is busy. Please wait a moment and try again.", { "Retry-After": "30" });
+    return fail(503, "The advisor is unavailable right now. Please try again in a little while.");
   }
 }

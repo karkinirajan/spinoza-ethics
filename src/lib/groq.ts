@@ -1,130 +1,52 @@
 /**
- * Groq API Integration
- * Handles all communication with the Groq API for AI-powered explanations
+ * Groq API call. SERVER ONLY: it reads the API key, so nothing that runs in the browser may import this file (a test checks that).
+ * The key is GROQ_API_KEY. It used to be a NEXT_PUBLIC_ variable (those are inlined into the JavaScript every visitor downloads), and
+ * this file was imported by client components, so the key was shipped to every visitor's browser and the Groq account could be
+ * used by anyone who opened the developer tools.
  */
+import type { Message } from "@/lib/explain";
 
-const NEXT_PUBLIC_GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile"; // High-performance model, supports reasoning and code
+export const MODEL = "llama-3.3-70b-versatile";
+export const TIMEOUT_MS = 20_000;
 
-interface GroqMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type GroqFailure = "unconfigured" | "rate_limited" | "unavailable" | "bad_response";
 
-interface GroqRequestBody {
-  model: string;
-  messages: GroqMessage[];
-  temperature: number;
-  max_tokens: number;
-  top_p: number;
-  stream: boolean;
-}
-
-interface GroqResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
-/**
- * Call Groq API with proper error handling
- * @param userPrompt - The user's question or request
- * @param systemPrompt - The system prompt that defines the AI's behavior
- * @returns The AI's response text
- */
-export async function callGroqAI(
-  userPrompt: string,
-  systemPrompt: string = "You are a helpful assistant."
-): Promise<string> {
-  if (!NEXT_PUBLIC_GROQ_API_KEY) {
-    console.error("NEXT_PUBLIC_GROQ_API_KEY is not configured");
-    throw new Error(
-      "API key not configured. Please set NEXT_PUBLIC_GROQ_API_KEY in your environment variables."
-    );
+/** A failure the route can turn into a status code. The message is for the server log; it is never sent to the browser. */
+export class GroqError extends Error {
+  constructor(
+    readonly kind: GroqFailure,
+    detail = "",
+  ) {
+    super(detail ? `${kind}: ${detail}` : kind);
   }
+}
 
-  if (!userPrompt || userPrompt.trim().length === 0) {
-    throw new Error("User prompt cannot be empty");
-  }
+type Options = { apiKey?: string | undefined; fetchImpl?: typeof fetch; timeoutMs?: number };
 
-  const messages: GroqMessage[] = [
-    {
-      role: "system",
-      content: systemPrompt,
-    },
-    {
-      role: "user",
-      content: userPrompt,
-    },
-  ];
+export async function askGroq(messages: Message[], options: Options = {}): Promise<string> {
+  const apiKey = (options.apiKey ?? process.env.GROQ_API_KEY ?? "").trim();
+  if (!apiKey) throw new GroqError("unconfigured");
+  const fetchImpl = options.fetchImpl ?? fetch;
 
-  const requestBody: GroqRequestBody = {
-    model: MODEL,
-    messages,
-    temperature: 0.7,
-    max_tokens: 1024,
-    top_p: 1,
-    stream: false,
-  };
-
+  let response: Response;
   try {
-    const response = await fetch(GROQ_API_URL, {
+    response = await fetchImpl(GROQ_API_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${NEXT_PUBLIC_GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: MODEL, messages, temperature: 0.7, max_tokens: 1024, top_p: 1, stream: false }),
+      signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage =
-        errorData.error?.message || `HTTP ${response.status}`;
-
-      if (response.status === 401) {
-        throw new Error("Invalid Groq API key. Please check your credentials.");
-      } else if (response.status === 429) {
-        throw new Error(
-          "Rate limit exceeded. Please wait a moment and try again."
-        );
-      } else if (response.status === 500) {
-        throw new Error("Groq API server error. Please try again later.");
-      }
-
-      throw new Error(`Groq API error: ${errorMessage}`);
-    }
-
-    const data: GroqResponse = await response.json();
-
-    if (
-      !data.choices ||
-      !data.choices[0] ||
-      !data.choices[0].message ||
-      !data.choices[0].message.content
-    ) {
-      throw new Error("Invalid response format from Groq API");
-    }
-
-    return data.choices[0].message.content;
   } catch (error) {
-    // Re-throw with helpful context
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error(
-      `Unexpected error calling Groq API: ${String(error)}`
-    );
+    throw new GroqError("unavailable", error instanceof Error ? error.name : "network");
   }
-}
 
-/**
- * Validate that the API key is properly configured
- * @returns true if API key is set, false otherwise
- */
-export function isGroqConfigured(): boolean {
-  return !!NEXT_PUBLIC_GROQ_API_KEY && NEXT_PUBLIC_GROQ_API_KEY.trim().length > 0;
+  if (response.status === 429) throw new GroqError("rate_limited");
+  // 401 and 403 are our own misconfiguration (a bad key), which the visitor can do nothing about: they see "unavailable".
+  if (!response.ok) throw new GroqError("unavailable", `HTTP ${response.status}`);
+
+  const data: unknown = await response.json().catch(() => null);
+  const content = (data as { choices?: { message?: { content?: unknown } }[] } | null)?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || content.trim() === "") throw new GroqError("bad_response");
+  return content;
 }

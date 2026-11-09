@@ -12,7 +12,7 @@ const InteractiveGroup = ({
     onClick?: () => void;
     className?: string;
     transform?: string;
-}) => (
+}): React.JSX.Element => (
     <g
         onClick={onClick}
         className={className}
@@ -29,11 +29,11 @@ const InteractiveGroup = ({
     </g>
 );
 
-const PowerDiagram = () => {
+const PowerDiagram = (): React.JSX.Element => {
     const { explainConcept } = useSpinoza();
     const C = useThemeColors();
 
-    const handleNodeClick = (title: string, context: string) => {
+    const handleNodeClick = (title: string, context: string): void => {
         explainConcept(title, context);
     };
 

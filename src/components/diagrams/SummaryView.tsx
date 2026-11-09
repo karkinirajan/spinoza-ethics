@@ -12,7 +12,7 @@ interface Block {
     content: ContentItem[];
 }
 
-const SummaryView = () => {
+const SummaryView = (): React.JSX.Element => {
     const processedData = React.useMemo(() => {
         const merged: Block[] = [];
         (summaryData as Block[]).forEach((block) => {

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { X, Loader2, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { callGroqAI } from "@/lib/groq";
+import { requestExplanation } from "@/lib/explain-client";
 
 interface SpinozaContextType {
   explainConcept: (title: string, context: string) => Promise<void>;
@@ -47,15 +47,8 @@ export const SpinozaProvider: FC<SpinozaProviderProps> = ({
       setError(null);
       setIsLoading(true);
 
-      const systemPrompt =
-        "You are an expert on Baruch Spinoza's Ethics. Explain concepts clearly, concisely, and relate them to modern life. Use a calm, rational tone.";
-      const userPrompt = `Explain the concept of "${title}" specifically in the context of "${context}" from Spinoza's Ethics.
-1. Summarize the core philosophical argument.
-2. Give a concrete, modern-day example of this concept in action.
-Keep it under 150 words.`;
-
       try {
-        const text = await callGroqAI(userPrompt, systemPrompt);
+        const text = await requestExplanation({ kind: "concept", title, context });
         setAiResponse(text);
         setError(null);
       } catch (error) {

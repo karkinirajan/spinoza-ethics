@@ -9,7 +9,7 @@ interface InteractiveGroupProps {
     className?: string;
 }
 
-const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps) => (
+const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps): React.JSX.Element => (
     <g
         transform={transform}
         onClick={onClick}
@@ -22,11 +22,11 @@ const InteractiveGroup = ({ transform, onClick, children, className = "" }: Inte
     </g>
 );
 
-const SystemDiagram = () => {
+const SystemDiagram = (): React.JSX.Element => {
     const { explainConcept } = useSpinoza();
     const C = useThemeColors();
 
-    const handleNodeClick = (title: string, context: string) => {
+    const handleNodeClick = (title: string, context: string): void => {
         explainConcept(title, context);
     };
 
@@ -46,7 +46,7 @@ const SystemDiagram = () => {
 
             <div className="w-full max-w-[1600px] mx-auto aspect-14/12 relative px-4">
                 <svg aria-labelledby="system-title" role="img" viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full font-sans">
-                    <title id="system-title">Complete system diagram of Spinoza's Ethics</title>
+                    <title id="system-title">Complete system diagram of Spinoza&apos;s Ethics</title>
                     <defs>
                         <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="3" />

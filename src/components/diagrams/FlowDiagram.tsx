@@ -9,7 +9,7 @@ interface InteractiveGroupProps {
     className?: string;
 }
 
-const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps) => (
+const InteractiveGroup = ({ transform, onClick, children, className = "" }: InteractiveGroupProps): React.JSX.Element => (
     <g
         transform={transform}
         onClick={onClick}
@@ -48,7 +48,7 @@ interface SubCardProps {
     onClick: () => void;
 }
 
-const FlowCard = ({ x, y, width, height, title, subtitle, fill, stroke, textFill, onClick }: FlowCardProps) => (
+const FlowCard = ({ x, y, width, height, title, subtitle, fill, stroke, textFill, onClick }: FlowCardProps): React.JSX.Element => (
     <InteractiveGroup transform={`translate(${x}, ${y})`} onClick={onClick}>
         <rect width={width} height={height} rx="8" fill={fill} stroke={stroke} strokeWidth="3" filter="url(#softShadow)" />
         <text x={width / 2} y={35} textAnchor="middle" fill={textFill} fontSize="20" fontWeight="800" letterSpacing="0.5">
@@ -60,7 +60,7 @@ const FlowCard = ({ x, y, width, height, title, subtitle, fill, stroke, textFill
     </InteractiveGroup>
 );
 
-const SubCard = ({ x, y, width, text, fill, stroke, textFill, parentX, parentY, onClick }: SubCardProps) => (
+const SubCard = ({ x, y, width, text, fill, stroke, textFill, parentX, parentY, onClick }: SubCardProps): React.JSX.Element => (
     <g>
         <path
             d={`M ${parentX} ${parentY} C ${parentX} ${y - 15}, ${x + width / 2} ${parentY + 15}, ${x + width / 2} ${y}`}
@@ -78,11 +78,11 @@ const SubCard = ({ x, y, width, text, fill, stroke, textFill, parentX, parentY, 
     </g>
 );
 
-const FlowDiagram = () => {
+const FlowDiagram = (): React.JSX.Element => {
     const { explainConcept } = useSpinoza();
     const C = useThemeColors();
 
-    const handleNodeClick = (title: string, context: string) => {
+    const handleNodeClick = (title: string, context: string): void => {
         explainConcept(title, context);
     };
 
@@ -114,7 +114,7 @@ const FlowDiagram = () => {
 
             <div className="w-full max-w-[1600px] mx-auto aspect-auto relative px-4 mt-2">
                 <svg aria-labelledby="flow-title" role="img" viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`} className="w-full h-auto min-h-[950px]">
-                    <title id="flow-title">Flow diagram of the five parts of Spinoza's Ethics</title>
+                    <title id="flow-title">Flow diagram of the five parts of Spinoza&apos;s Ethics</title>
                     <defs>
                         <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="3" />

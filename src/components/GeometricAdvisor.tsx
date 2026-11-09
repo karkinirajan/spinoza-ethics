@@ -9,7 +9,7 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
-import { callGroqAI } from "@/lib/groq";
+import { requestExplanation } from "@/lib/explain-client";
 
 interface AdvisorState {
   response: string | null;
@@ -37,16 +37,8 @@ const GeometricAdvisor: FC = () => {
         isLoading: true,
       });
 
-      const systemPrompt = `You are Baruch Spinoza. You reply to personal problems NOT with generic advice, but by generating a specific 'Proposition', 'Demonstration', and 'Scholium' in the style of your book 'The Ethics'.
-- Proposition: A concise statement of truth regarding the user's problem.
-- Demonstration: A logical proof derived from reason.
-- Scholium: A compassionate, practical comment on how to apply this.
-Tone: Rational, geometric, yet deeply liberating.`;
-
-      const userPrompt = `The user says: "${userQuery}". Construct a geometric proof to help them.`;
-
       try {
-        const text = await callGroqAI(userPrompt, systemPrompt);
+        const text = await requestExplanation({ kind: "advisor", query: userQuery });
         setState({
           response: text,
           error: null,
@@ -57,7 +49,7 @@ Tone: Rational, geometric, yet deeply liberating.`;
           error instanceof Error
             ? error.message
             : "Unknown error occurred. Please try again.";
-        console.error("Groq API Error:", error);
+        console.error("Advisor error:", error);
         setState({
           response: null,
           error: errorMessage,

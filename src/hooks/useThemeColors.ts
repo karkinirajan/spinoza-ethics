@@ -3,66 +3,70 @@
 import { useContext } from 'react';
 import { ThemeContext } from '@/context/ThemeContext';
 
-export const useThemeColors = () => {
+/** The palette used before the theme is known (and outside a ThemeProvider): the light theme. */
+const defaultColors = {
+    bg: '#ffffff',
+    grid: '#e2e8f0',
+    text: {
+        primary: '#1f2937',
+        secondary: '#4b5563',
+        muted: '#94a3b8',
+        mutedLight: '#cbd5e1',
+    },
+    substance: {
+        stroke: '#a855f7',
+        fill: '#f3e8ff',
+        text: '#6b21a8',
+    },
+    thought: {
+        stroke: '#4f46e5',
+        fill: '#e0e7ff',
+        text: '#312e81',
+    },
+    extension: {
+        stroke: '#db2777',
+        fill: '#fce7f3',
+        text: '#831843',
+    },
+    bondage: {
+        stroke: '#ea580c',
+        fill: '#ffedd5',
+        text: '#9a3412',
+    },
+    freedom: {
+        stroke: '#059669',
+        fill: '#d1fae5',
+        text: '#065f46',
+    },
+    parallelism: {
+        stroke: '#ec4899',
+        fill: '#fce7f3',
+        text: '#9f1239',
+    },
+    reason: {
+        stroke: '#d97706',
+        fill: '#fef3c7',
+        text: '#92400e',
+    },
+    bliss: {
+        stroke: '#15803d',
+        fill: '#86efac',
+        text: '#ffffff',
+    },
+    layer: {
+        stroke: '#cbd5e1',
+        fill: '#f8fafc',
+        text: '#475569',
+    },
+    white: '#ffffff',
+    surface: '#f8fafc',
+};
+
+export type ThemeColors = typeof defaultColors;
+
+export const useThemeColors = (): ThemeColors => {
     const context = useContext(ThemeContext);
 
-    const defaultColors = {
-        bg: '#ffffff',
-        grid: '#e2e8f0',
-        text: {
-            primary: '#1f2937',
-            secondary: '#4b5563',
-            muted: '#94a3b8',
-            mutedLight: '#cbd5e1',
-        },
-        substance: {
-            stroke: '#a855f7',
-            fill: '#f3e8ff',
-            text: '#6b21a8',
-        },
-        thought: {
-            stroke: '#4f46e5',
-            fill: '#e0e7ff',
-            text: '#312e81',
-        },
-        extension: {
-            stroke: '#db2777',
-            fill: '#fce7f3',
-            text: '#831843',
-        },
-        bondage: {
-            stroke: '#ea580c',
-            fill: '#ffedd5',
-            text: '#9a3412',
-        },
-        freedom: {
-            stroke: '#059669',
-            fill: '#d1fae5',
-            text: '#065f46',
-        },
-        parallelism: {
-            stroke: '#ec4899',
-            fill: '#fce7f3',
-            text: '#9f1239',
-        },
-        reason: {
-            stroke: '#d97706',
-            fill: '#fef3c7',
-            text: '#92400e',
-        },
-        bliss: {
-            stroke: '#15803d',
-            fill: '#86efac',
-            text: '#ffffff',
-        },
-        layer: {
-            stroke: '#cbd5e1',
-            fill: '#f8fafc',
-            text: '#475569',
-        },
-        white: '#ffffff',
-        surface: '#f8fafc',
-    };
 
     if (!context || !context.mounted) {
         return defaultColors;

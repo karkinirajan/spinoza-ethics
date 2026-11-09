@@ -1,5 +1,5 @@
 
-const AboutView = () => {
+const AboutView = (): React.JSX.Element => {
     return (
         <div className="w-full h-full p-8 md:p-12 overflow-y-auto bg-[var(--surface)] rounded-2xl border-bt-xl border-tr-xl">
             <div className="max-w-6xl mx-auto">

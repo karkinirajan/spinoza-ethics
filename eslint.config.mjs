@@ -23,7 +23,12 @@ const eslintConfig = defineConfig([
           varsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/explicit-function-return-types": "warn",
+      // (This rule was misnamed before, so it never ran. Callbacks and typed function expressions are exempt: React components are
+      // typed by FC and inline handlers by their props.)
+      "@typescript-eslint/explicit-function-return-type": [
+        "warn",
+        { allowExpressions: true, allowTypedFunctionExpressions: true, allowHigherOrderFunctions: true },
+      ],
 
       // Code quality
       "no-console": [
@@ -42,6 +47,11 @@ const eslintConfig = defineConfig([
       "react-hooks/exhaustive-deps": "off",
     },
   },
+  {
+    // Test helpers are small arrow functions whose types are inferred.
+    files: ["test/**/*.ts"],
+    rules: { "@typescript-eslint/explicit-function-return-type": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -53,7 +63,6 @@ const eslintConfig = defineConfig([
     ".git/**",
     "dist/**",
     "coverage/**",
-    ".eslintrc.json",
   ]),
 ]);
 
