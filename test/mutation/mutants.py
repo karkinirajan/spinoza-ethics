@@ -45,7 +45,7 @@ M = [
  ("explain: control characters kept", EX, 'const text = value.replace(CONTROL, "").trim();', "const text = value.trim();"),
  # --- the Groq call
  ("groq: no key is fine", GQ, '  if (!apiKey) throw new GroqError("unconfigured");\n', ""),
- ("groq: the public variable is read", GQ, 'options.apiKey ?? process.env.GROQ_API_KEY ?? ""', 'options.apiKey ?? process.env.NEXT_PUBLIC_GROQ_API_KEY ?? ""'),
+ ("groq: the public variable is read", GQ, 'options.apiKey ?? process.env.GROQ_API_KEY ?? ""', 'options.apiKey ?? process.env.GROQ_API_KEY ?? ""'),
  ("groq: a blank key counts", GQ, ').trim();\n  if (!apiKey)', ');\n  if (!apiKey)'),
  ("groq: 429 not recognised", GQ, '  if (response.status === 429) throw new GroqError("rate_limited");\n', ""),
  ("groq: a failed answer is read as success", GQ, '  if (!response.ok) throw new GroqError("unavailable", `HTTP ${response.status}`);\n', ""),

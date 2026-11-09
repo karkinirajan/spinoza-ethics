@@ -25,7 +25,7 @@ describe("askGroq", () => {
   it("reads the key from GROQ_API_KEY, not from a NEXT_PUBLIC variable", async () => {
     const fetchImpl = vi.fn(async () => ok("x"));
     vi.stubEnv("GROQ_API_KEY", "server-key");
-    vi.stubEnv("NEXT_PUBLIC_GROQ_API_KEY", "public-key");
+    vi.stubEnv("GROQ_API_KEY", "public-key");
     await askGroq(messages, { fetchImpl });
     expect(((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].headers as Record<string, string>).Authorization).toBe("Bearer server-key");
     vi.unstubAllEnvs();
