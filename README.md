@@ -150,7 +150,7 @@ spinoza-ethics/
 
 1. Push code to GitHub
 2. Import project in [Vercel](https://vercel.com/new)
-3. Add the environment variable `GROQ_API_KEY` in Vercel settings (not `GROQ_API_KEY`)
+3. Add the environment variable `GROQ_API_KEY` in Vercel settings (not `NEXT_PUBLIC_GROQ_API_KEY`)
 4. Deploy
 
 ### Environment Variables for Production
