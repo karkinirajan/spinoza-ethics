@@ -43,7 +43,7 @@ describe("POST /api/explain: what it does", () => {
     const sent = JSON.parse(String(init.body));
     expect(sent.messages[0]).toEqual({ role: "system", content: ADVISOR_SYSTEM_PROMPT });
     expect(sent.messages[1].content).toContain(JSON.stringify("I am anxious about my career"));
-    expect(sent.max_tokens).toBe(1024);
+    expect(sent.max_tokens).toBe(2048);
   });
   it("uses the concept prompt for a concept", async () => {
     await call({ kind: "concept", title: "Conatus", context: "Striving to persevere" });

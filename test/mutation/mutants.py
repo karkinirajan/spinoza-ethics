@@ -50,7 +50,7 @@ M = [
  ("groq: 429 not recognised", GQ, '  if (response.status === 429) throw new GroqError("rate_limited");\n', ""),
  ("groq: a failed answer is read as success", GQ, '  if (!response.ok) throw new GroqError("unavailable", `HTTP ${response.status}`);\n', ""),
  ("groq: no timeout", GQ, "      signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),\n", ""),
- ("groq: the token cap lifted", GQ, "max_tokens: 1024,", "max_tokens: 100000,"),
+ ("groq: the token cap lifted", GQ, "export const MAX_TOKENS = 2048;", "export const MAX_TOKENS = 100000;"),
  ("groq: the key is not sent", GQ, "Authorization: `Bearer ${apiKey}`", "Authorization: `Bearer`"),
  ("groq: blank answers accepted", GQ, 'typeof content !== "string" || content.trim() === ""', 'typeof content !== "string"'),
  ("groq: the provider's words are kept", GQ, 'throw new GroqError("unavailable", error instanceof Error ? error.name : "network");', 'throw new GroqError("unavailable", String(error));'),

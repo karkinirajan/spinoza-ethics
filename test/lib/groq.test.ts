@@ -12,7 +12,7 @@ describe("askGroq", () => {
     expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
     expect(init.method).toBe("POST");
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer test-key-123");
-    expect(JSON.parse(String(init.body))).toEqual({ model: MODEL, messages, temperature: 0.7, max_tokens: 1024, top_p: 1, stream: false });
+    expect(JSON.parse(String(init.body))).toEqual({ model: MODEL, messages, temperature: 0.7, max_tokens: 2048, top_p: 1, reasoning_effort: "low", include_reasoning: false, stream: false });
   });
   it("gives the request a timeout, so a hung provider cannot hold the function open", async () => {
     const fetchImpl = vi.fn(async () => ok("x"));

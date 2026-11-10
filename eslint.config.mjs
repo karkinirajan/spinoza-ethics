@@ -59,6 +59,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local, git-ignored notes from an editor tool; not project source.
+    ".remember/**",
     "node_modules/**",
     ".git/**",
     "dist/**",

@@ -7,7 +7,10 @@
 import type { Message } from "@/lib/explain";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-export const MODEL = "llama-3.3-70b-versatile";
+// llama-3.3-70b-versatile was retired for non-enterprise keys on 2026-08-16 (Groq returned HTTP 404). gpt-oss-120b is the listed
+// successor. It is a reasoning model: reasoning tokens count against max_tokens, so effort is kept low and the cap leaves room.
+export const MODEL = "openai/gpt-oss-120b";
+export const MAX_TOKENS = 2048;
 export const TIMEOUT_MS = 20_000;
 
 export type GroqFailure = "unconfigured" | "rate_limited" | "unavailable" | "bad_response";
@@ -34,7 +37,16 @@ export async function askGroq(messages: Message[], options: Options = {}): Promi
     response = await fetchImpl(GROQ_API_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: MODEL, messages, temperature: 0.7, max_tokens: 1024, top_p: 1, stream: false }),
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: MAX_TOKENS,
+        top_p: 1,
+        reasoning_effort: "low",
+        include_reasoning: false,
+        stream: false,
+      }),
       signal: AbortSignal.timeout(options.timeoutMs ?? TIMEOUT_MS),
     });
   } catch (error) {
